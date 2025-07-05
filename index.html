@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Registration System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom style for table container to enable vertical scrollbar */
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.85); /* Semi-transparent white for readability */
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-image: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <div class="container mx-auto p-4 max-w-4xl">
+        <!-- Header Section -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Student Registration System</h1>
+            <p class="text-lg text-gray-600">
+                A user-friendly system to manage student records. Add, edit, and delete student details including name, class, address, email, and contact number with data persistence using local storage.
+            </p>
+        </header>
+
+        <!-- Form for adding/editing students -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+            <form id="studentForm" class="space-y-4">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                    <input type="text" id="name" name="name" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="class" class="block text-sm font-medium text-gray-700">Class</label>
+                    <input type="text" id="class" name="class" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="address" class="block text-sm font-medium text-gray-700">Address</label>
+                    <input type="text" id="address" name="address" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" id="email" name="email" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label for="contact" class="block text-sm font-medium text-gray-700">Contact Number</label>
+                    <input type="tel" id="contact" name="contact" required class="mt-1 p-2 w-full border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" id="submitBtn" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition duration-200">Register Student</button>
+                <button type="button" id="cancelBtn" class="w-full bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600 transition duration-200 hidden">Cancel</button>
+            </form>
+        </div>
+
+        <!-- Table to display students with scrollbar -->
+        <div class="bg-white p-6 rounded-lg shadow-md table-container">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">Registered Students</h2>
+            <table class="w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Name</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Class</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Address</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Email</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Contact</th>
+                        <th class="px-4 py-2 text-left text-sm font-medium text-gray-700">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="studentTableBody" class="divide-y divide-gray-200">
+                    <!-- Student data will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Initialize students array from localStorage or empty array
+        let students = JSON.parse(localStorage.getItem('students')) || [];
+        let editIndex = -1;
+
+        // Form elements
+        const studentForm = document.getElementById('studentForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const studentTableBody = document.getElementById('studentTableBody');
+        const nameInput = document.getElementById('name');
+        const classInput = document.getElementById('class');
+        const addressInput = document.getElementById('address');
+        const emailInput = document.getElementById('email');
+        const contactInput = document.getElementById('contact');
+
+        // Function to save students to localStorage
+        function saveStudents() {
+            try {
+                localStorage.setItem('students', JSON.stringify(students));
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+                alert('Failed to save student data.');
+            }
+        }
+
+        // Function to render the student table
+        function renderTable() {
+            // Clear existing table content
+            studentTableBody.innerHTML = '';
+            // Check if students array is empty
+            if (students.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="6" class="px-4 py-2 text-sm text-gray-700 text-center">No students registered.</td>`;
+                studentTableBody.appendChild(row);
+                return;
+            }
+            //If student array is not empty populate table with student data
+            students.forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-4 py-2 text-sm text-gray-700">${student.name}</td>
+                    <td class="px-4 py-2 text-sm text-gray-700">${student.class}</td>
+                    <td class="px-4 py-2 text-sm text-gray-700">${student.address}</td>
+                    <td class="px-4 py-2 text-sm text-gray-700">${student.email}</td>
+                    <td class="px-4 py-2 text-sm text-gray-700">${student.contact}</td>
+                    <td class="px-4 py-2 text-sm">
+                        <button onclick="editStudent(${index})" class="text-blue-500 hover:underline mr-2">Edit</button>
+                        <button onclick="deleteStudent(${index})" class="text-red-500 hover:underline">Delete</button>
+                    </td>
+                `;
+                studentTableBody.appendChild(row);
+            });
+        }
+
+        // Form submission handler
+        studentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            // Create student object
+            const student = {
+                name: nameInput.value.trim(),
+                class: classInput.value.trim(),
+                address: addressInput.value.trim(),
+                email: emailInput.value.trim(),
+                contact: contactInput.value.trim()
+            };
+
+            if (editIndex === -1) {
+                // Add new student
+                students.push(student);
+            } else {
+                // Update existing student
+                students[editIndex] = student;
+                editIndex = -1;
+                submitBtn.textContent = 'Register Student';
+                cancelBtn.classList.add('hidden');
+            }
+
+            // Save to localStorage and update table
+            saveStudents();
+            renderTable();
+            studentForm.reset();
+        });
+
+        // Edit student
+        function editStudent(index) {
+            const student = students[index];
+            nameInput.value = student.name;
+            classInput.value = student.class;
+            addressInput.value = student.address;
+            emailInput.value = student.email;
+            contactInput.value = student.contact;
+            editIndex = index;
+            submitBtn.textContent = 'Update Student';
+            cancelBtn.classList.remove('hidden');
+        }
+
+        // Delete student
+        function deleteStudent(index) {
+            if (confirm('Are you sure you want to delete this student?')) {
+                students.splice(index, 1);
+                saveStudents();
+                renderTable();
+            }
+        }
+
+        // Cancel edit
+        cancelBtn.addEventListener('click', () => {
+            editIndex = -1;
+            studentForm.reset();
+            submitBtn.textContent = 'Register Student';
+            cancelBtn.classList.add('hidden');
+        });
+
+        // Initial render on page load
+        renderTable();
+    </script>
+</body>
+</html>
